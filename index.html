@@ -458,18 +458,43 @@ function showScreen(id) {
     document.getElementById(id).classList.add('active');
 }
 
-// --- PRELOADER ---
+// --- PRELOADER: реальная загрузка всех видео ---
 const fill = document.getElementById('preloader-fill');
 const preloader = document.getElementById('preloader');
-let progress = 0;
-const preloadInterval = setInterval(() => {
-    progress += Math.random() * 25 + 10;
-    if (progress >= 100) { progress = 100; clearInterval(preloadInterval); }
-    fill.style.width = progress + '%';
-    if (progress >= 100) {
+const allVideos = document.querySelectorAll('video');
+let loaded = 0;
+const total = allVideos.length;
+
+allVideos.forEach(v => {
+    v.preload = 'auto';
+    v.load();
+    function check() {
+        // readyState 4 = HAVE_ENOUGH_DATA
+        if (v.readyState >= 4) {
+            loaded++;
+            fill.style.width = Math.round((loaded / total) * 100) + '%';
+            if (loaded >= total) {
+                setTimeout(() => preloader.classList.add('done'), 300);
+            }
+        } else {
+            v.addEventListener('canplaythrough', () => {
+                loaded++;
+                fill.style.width = Math.round((loaded / total) * 100) + '%';
+                if (loaded >= total) {
+                    setTimeout(() => preloader.classList.add('done'), 300);
+                }
+            }, { once: true });
+        }
+    }
+    check();
+});
+// Fallback: если за 8 сек не загрузилось — пускаем всё равно
+setTimeout(() => {
+    if (!preloader.classList.contains('done')) {
+        fill.style.width = '100%';
         setTimeout(() => preloader.classList.add('done'), 300);
     }
-}, 200);
+}, 8000);
 
 // --- COUNTER ---
 let count = 1247 + Math.floor(Math.random() * 300);
