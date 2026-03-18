@@ -485,7 +485,7 @@ function handleStartBtn() {
         showScreen('screen2');
         const video1 = document.getElementById('video1');
         document.getElementById('btn-why').style.display = 'none';
-        video1.currentTime = 0;
+        video1.currentTime = 1;
         video1.play().catch(()=>{});
         video1.onended = () => {
             document.getElementById('btn-why').style.display = 'block';
@@ -526,7 +526,7 @@ function handleNo() {
     document.getElementById('panel-no').style.display = 'none';
     showScreen('screen-no');
     const video2 = document.getElementById('video2');
-    video2.currentTime = 0;
+    video2.currentTime = 1;
     video2.play().catch(()=>{});
     video2.onended = () => {
         document.getElementById('panel-no').style.display = 'block';
@@ -579,7 +579,7 @@ function handleChallengeYes() {
     updateCounter();
     showScreen('screen4');
     const outro = document.getElementById('video-outro');
-    outro.currentTime = 0;
+    outro.currentTime = 1;
     outro.play().catch(()=>{});
 }
 
