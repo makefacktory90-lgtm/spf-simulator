@@ -360,19 +360,25 @@
 
     <!-- SCREEN BUY: pitch -->
     <div class="screen" id="screen-buy">
-        <div class="challenge-screen" style="justify-content:center;">
-            <div style="font-size:72px; margin-bottom:24px;">🧴</div>
-            <div class="challenge-title" style="font-size:22px; margin-bottom:16px;">
-                Здесь мог быть<br>ваш крем.
+        <div class="challenge-screen" style="justify-content:center; background:#0a0a0a;">
+            <!-- SVG силуэт крема -->
+            <svg width="120" height="180" viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:28px; opacity:0.15;">
+                <rect x="35" y="40" width="50" height="120" rx="12" fill="white"/>
+                <rect x="42" y="28" width="36" height="18" rx="6" fill="white"/>
+                <rect x="50" y="18" width="20" height="14" rx="4" fill="white"/>
+                <rect x="55" y="10" width="10" height="10" rx="3" fill="white"/>
+            </svg>
+            <div style="font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:700; color:#fff; text-align:center; line-height:1.3; margin-bottom:16px;">
+                Здесь могла быть<br>ваша реклама.
             </div>
-            <div class="challenge-sub" style="font-size:15px; margin-bottom:32px; color:#555;">
+            <div style="font-size:14px; color:#888; text-align:center; margin-bottom:36px; line-height:1.6;">
                 Хотите такую игрушку для вашего бренда?<br>
-                Напишите Ире — сделаем за неделю.
+                Напишите — сделаем за неделю.
             </div>
             <a href="https://t.me/ira_and_ai" class="btn" style="text-decoration:none; text-align:center; margin-bottom:12px;">
                 Написать Ире ✍️
             </a>
-            <button class="btn btn-outline" onclick="handleNo()">Начать заново</button>
+            <button class="btn btn-outline" style="color:#fff; border-color:#444;" onclick="restartGame()">Начать заново</button>
         </div>
     </div>
 
@@ -532,9 +538,10 @@ function handleYes() {
     startChallenge();
 }
 
-function showBuyScreen() {
+function restartGame() {
     playClick();
-    showScreen('screen-buy');
+    document.getElementById('panel-doshlo').style.display = 'none';
+    showScreen('screen1');
 }
 
 function handleNo() {
