@@ -438,50 +438,44 @@ function startErasing() {
     const hint = document.getElementById('eraser-hint');
     const blurOverlay = document.getElementById('blur-overlay');
 
-    // Reset blur overlay
+    // Reset state
+    blurOverlay.style.backdropFilter = 'blur(18px)';
+    blurOverlay.style.webkitBackdropFilter = 'blur(18px)';
+    blurOverlay.style.opacity = '1';
     blurOverlay.classList.remove('hidden');
-
-    canvas.width = area.offsetWidth;
-    canvas.height = area.offsetHeight;
-    canvas.style.display = 'block';
-    canvas.style.opacity = '1';
-    hint.style.display = 'block';
 
     erasedPercent = 0;
     erasingDone = false;
+    hint.style.display = 'block';
     document.getElementById('btn-why').style.display = 'none';
-    document.getElementById('screen2-text').innerText = '☀️ Стирай молодость...';
+    document.getElementById('screen2-text').innerText = '☀️ Стирай дымку...';
 
-    // Draw young face on canvas (to erase revealing old face beneath)
+    // Canvas is just for tracking touch/mouse — transparent, no image drawn
+    canvas.width = area.offsetWidth;
+    canvas.height = area.offsetHeight;
+    canvas.style.display = 'block';
+
+    // Clone to remove old listeners
     const newCanvas = canvas.cloneNode(true);
     canvas.parentNode.replaceChild(newCanvas, canvas);
-    const newCtx = newCanvas.getContext('2d');
-    const img2 = new Image();
-    img2.src = 'images/25.jpg';
-    img2.onload = () => { newCtx.drawImage(img2, 0, 0, newCanvas.width, newCanvas.height); };
 
     function erase(x, y) {
         if (erasingDone) return;
-        newCtx.globalCompositeOperation = 'destination-out';
-        newCtx.beginPath();
-        newCtx.arc(x, y, 40, 0, Math.PI * 2);
-        newCtx.fill();
         hint.style.display = 'none';
-        erasedPercent += 0.3;
+        erasedPercent += 0.5;
 
-        // Gradually reduce blur as user erases
-        const blurAmount = Math.max(0, 12 - erasedPercent * 0.3);
+        // Reduce blur as user erases
+        const blurAmount = Math.max(0, 18 - erasedPercent * 0.45);
         blurOverlay.style.backdropFilter = `blur(${blurAmount}px)`;
         blurOverlay.style.webkitBackdropFilter = `blur(${blurAmount}px)`;
+        blurOverlay.style.opacity = String(Math.max(0, 1 - erasedPercent * 0.025));
 
         if (erasedPercent > 40 && !erasingDone) {
             erasingDone = true;
+            blurOverlay.style.transition = 'opacity 0.8s, backdrop-filter 0.8s';
             blurOverlay.classList.add('hidden');
-            newCanvas.style.transition = 'opacity 0.8s';
-            newCanvas.style.opacity = '0';
             playHorror();
             setTimeout(() => {
-                newCanvas.style.display = 'none';
                 document.getElementById('screen2-text').innerText = '';
                 document.getElementById('btn-why').style.display = 'block';
             }, 800);
