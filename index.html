@@ -581,8 +581,15 @@ function handleChallengeYes() {
     updateCounter();
     showScreen('screen4');
     const outro = document.getElementById('video-outro');
-    outro.currentTime = 1;
+    outro.currentTime = 1.5;
     outro.play().catch(()=>{});
+    // Обрезаем конец на 0.5 сек раньше
+    outro.ontimeupdate = () => {
+        if (outro.duration && outro.currentTime >= outro.duration - 0.5) {
+            outro.pause();
+            outro.ontimeupdate = null;
+        }
+    };
 }
 
 function shareResult() {
