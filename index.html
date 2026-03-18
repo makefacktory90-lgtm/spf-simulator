@@ -276,13 +276,14 @@
 </head>
 <body>
 
-<!-- PRELOADER -->
-<div class="preloader" id="preloader">
-    <div class="preloader-text">Загружаем будущее...</div>
-    <div class="preloader-bar">
-        <div class="preloader-fill" id="preloader-fill"></div>
+    <!-- PRELOADER -->
+    <div class="preloader" id="preloader">
+        <div style="font-family:'Cormorant Garamond',serif; font-size:13px; color:#444; letter-spacing:4px; text-transform:uppercase; margin-bottom:8px;">ira&ai 4K</div>
+        <div class="preloader-text" style="font-size:11px; color:#333; letter-spacing:6px;">PRESENTS</div>
+        <div class="preloader-bar" style="margin-top:28px;">
+            <div class="preloader-fill" id="preloader-fill"></div>
+        </div>
     </div>
-</div>
 
 <div class="app">
 
@@ -293,10 +294,9 @@
         </div>
         <div class="panel">
             <div class="panel-text">
-                <em>Тебе 25. Ты не веришь в SPF.</em><br>
-                Посмотри, что солнце сделает с твоей кожей за 20 лет.
+                <em>Тебе 25. Ты не веришь в SPF.</em>
             </div>
-            <button class="btn" onclick="startErasing()">☀️ Показать</button>
+            <button class="btn" id="btn-start" onclick="handleStartBtn()">☀️ Показать</button>
         </div>
     </div>
 
@@ -321,18 +321,16 @@
                     <div class="stat-label">старения кожи — от солнца</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-num">3x</div>
-                    <div class="stat-label">быстрее теряется коллаген</div>
+                    <div class="stat-num">24%</div>
+                    <div class="stat-label">меньше морщин с SPF каждый день</div>
                 </div>
             </div>
-            <p>Исследование Университета Квинсленда, Австралия. 903 участника наблюдались 4.5 года.</p>
             <div class="highlight">
-                <p><strong>Результат:</strong> группа с ежедневным SPF показала на 24% меньше признаков старения кожи.</p>
+                <p>903 человека. 4.5 года наблюдений. Университет Квинсленда.<br><strong>Вывод: SPF каждый день реально работает.</strong></p>
             </div>
-            <p>Пигментные пятна появляются на 10 лет раньше. Сосудистые звёздочки, сухость, потеря упругости — всё это можно было предотвратить.</p>
             <div class="finale">
                 Защищаться нужно уже сегодня.<br>
-                <strong>Даже если вы не видите разницы.</strong>
+                <strong>Даже если не видишь разницы.</strong>
             </div>
         </div>
         <div class="panel" id="panel-doshlo" style="display:none;">
@@ -502,22 +500,39 @@ function updateCounter() {
 let erasedPercent = 0;
 let erasingDone = false;
 
-function startErasing() {
+let introWatched = false;
+
+function handleStartBtn() {
     playClick();
-    // Play intro with sound first, then go to aging video
+    const btn = document.getElementById('btn-start');
     const introVideo = document.getElementById('video-intro');
-    introVideo.play().catch(()=>{});
-    introVideo.onended = () => {
-        showScreen('screen2');
-        const video1 = document.getElementById('video1');
-        document.getElementById('screen2-text').innerText = '☀️ Смотри что происходит...';
-        document.getElementById('btn-why').style.display = 'none';
-        video1.currentTime = 0;
-        video1.play().catch(()=>{});
-        video1.onended = () => {
-            document.getElementById('screen2-text').innerText = '';
-            document.getElementById('btn-why').style.display = 'block';
+    if (!introWatched) {
+        // Первое нажатие — играем интро
+        introVideo.currentTime = 0;
+        introVideo.play().catch(()=>{});
+        introVideo.onended = () => {
+            introWatched = true;
+            btn.innerText = 'Посмотри, что солнце сделает с кожей за 20 лет →';
+            btn.style.fontSize = '13px';
         };
+    } else {
+        // Второе нажатие — переходим на видео старения
+        startErasing();
+    }
+}
+
+function startErasing() {
+    introWatched = false;
+    document.getElementById('btn-start').innerText = '☀️ Показать';
+    document.getElementById('btn-start').style.fontSize = '';
+    showScreen('screen2');
+    const video1 = document.getElementById('video1');
+    document.getElementById('screen2-text').innerText = '';
+    document.getElementById('btn-why').style.display = 'none';
+    video1.currentTime = 0;
+    video1.play().catch(()=>{});
+    video1.onended = () => {
+        document.getElementById('btn-why').style.display = 'block';
     };
 }
 
