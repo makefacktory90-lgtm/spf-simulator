@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ей 25. Она не верит в SPF.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --muted: #999;
+            --accent: #FF6B6B;
+            --accent-glow: rgba(255,107,107,0.35);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: var(--text);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; overflow: hidden;
+        }
+
+        /* --- CHALLENGE SCREEN --- */
+        .challenge-screen {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 40px 28px; text-align: center;
+            flex: 1;
+        }
+        .challenge-emoji { font-size: 64px; margin-bottom: 20px; }
+        .challenge-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 26px; font-weight: 700;
+            line-height: 1.3; margin-bottom: 12px;
+        }
+        .challenge-sub {
+            font-size: 14px; color: var(--muted);
+            margin-bottom: 32px; line-height: 1.6;
+        }
+        .timer-ring {
+            position: relative; width: 120px; height: 120px;
+            margin: 0 auto 28px;
+        }
+        .timer-ring svg { transform: rotate(-90deg); }
+        .timer-ring circle {
+            fill: none; stroke: #eee; stroke-width: 6;
+        }
+        .timer-ring circle.progress {
+            stroke: var(--accent); stroke-linecap: round;
+            stroke-dasharray: 314; stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear, stroke 0.3s;
+        }
+        .timer-num {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px; font-weight: 700; color: var(--accent);
+        }
+        .challenge-prompt {
+            font-size: 17px; font-weight: 600;
+            line-height: 1.5; margin-bottom: 28px;
+            color: var(--text);
+        }
+        .challenge-prompt span { color: var(--accent); }
+        .challenge-result {
+            display: none; font-size: 15px;
+            line-height: 1.6; color: #444;
+            margin-bottom: 20px;
+        }
+        .challenge-result.show { display: block; }
+
+        /* --- PRELOADER --- */
+        .preloader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0a0a; z-index: 1000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.6s;
+        }
+        .preloader.done { opacity: 0; pointer-events: none; }
+        .preloader-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 14px; color: #555; letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 24px;
+        }
+        .preloader-bar {
+            width: 200px; height: 2px; background: #222; border-radius: 2px; overflow: hidden;
+        }
+        .preloader-fill {
+            height: 100%; width: 0%; background: var(--accent);
+            transition: width 0.3s;
+        }
+
+        /* --- APP --- */
+        .app {
+            width: 100%; max-width: 500px; height: 100vh;
+            display: flex; flex-direction: column;
+            background: var(--bg); position: relative; overflow: hidden;
+            box-shadow: 0 0 80px rgba(0,0,0,0.3);
+        }
+        .header {
+            padding: 20px 20px 10px; text-align: center; z-index: 10;
+            background: var(--bg);
+        }
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 26px; font-weight: 700;
+            letter-spacing: 3px; text-transform: uppercase;
+        }
+        .header p {
+            font-size: 11px; color: var(--muted);
+            letter-spacing: 1px; text-transform: uppercase; margin-top: 4px;
+        }
+
+        /* --- SCREENS --- */
+        .screen {
+            flex: 1; position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.6s ease;
+            padding-top: 70px;
+        }
+        .screen.active { opacity: 1; pointer-events: all; }
+
+        .screen-image {
+            flex: 1; position: relative; overflow: hidden;
+            background: #f0f0f0;
+        }
+        .screen-image img {
+            width: 100%; height: 100%; object-fit: cover;
+            position: absolute; top: 0; left: 0;
+        }
+        .screen-image canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: 2;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50"><text y="38" font-size="40">☀️</text></svg>') 25 25, auto;
+        }
+        /* blur overlay on old face */
+        .blur-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: 1;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.15);
+            transition: opacity 1s ease;
+        }
+        .blur-overlay.hidden { opacity: 0; pointer-events: none; }
+
+        .panel {
+            padding: 20px 24px 28px;
+            background: var(--bg); z-index: 10;
+        }
+        .panel-text {
+            font-size: 15px; line-height: 1.6;
+            text-align: center; margin-bottom: 16px;
+            color: #333;
+        }
+        .panel-text strong { color: var(--accent); }
+        .panel-text em {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px; font-style: italic;
+        }
+
+        .btn {
+            display: block; width: 100%;
+            background: var(--accent); color: #fff; border: none;
+            padding: 16px; border-radius: 30px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600; font-size: 15px;
+            cursor: pointer; transition: all 0.25s;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            letter-spacing: 0.5px;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-outline {
+            background: transparent; color: var(--text);
+            border: 1.5px solid #ddd; box-shadow: none;
+        }
+        .btn-row { display: flex; gap: 12px; }
+        .btn-row .btn { flex: 1; }
+
+        /* --- RESEARCH --- */
+        .research-scroll {
+            flex: 1; overflow-y: auto; padding: 28px 24px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .research-scroll h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px; font-weight: 700; margin-bottom: 20px;
+            text-align: center;
+        }
+        .research-scroll p {
+            font-size: 15px; line-height: 1.7; margin-bottom: 14px; color: #444;
+        }
+        .highlight {
+            background: rgba(255,107,107,0.08);
+            border-left: 3px solid var(--accent);
+            padding: 16px 18px; border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+        }
+        .highlight p { margin: 0; color: var(--text); }
+        .stat-row {
+            display: flex; gap: 12px; margin: 20px 0;
+        }
+        .stat-card {
+            flex: 1; text-align: center;
+            padding: 16px 8px; border-radius: 12px;
+            background: #fafafa; border: 1px solid #eee;
+        }
+        .stat-num {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px; font-weight: 700; color: var(--accent);
+        }
+        .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .finale {
+            font-size: 17px; font-weight: 600;
+            text-align: center; margin-top: 24px;
+            padding-top: 20px; border-top: 1px solid #eee;
+            line-height: 1.5;
+        }
+
+        /* --- ERASER HINT --- */
+        .eraser-hint {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff; font-size: 15px; font-weight: 500;
+            text-align: center; z-index: 3;
+            pointer-events: none;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+            animation: pulse 2s infinite;
+            background: rgba(0,0,0,0.3); padding: 12px 24px;
+            border-radius: 30px; backdrop-filter: blur(4px);
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.03); }
+        }
+
+        /* --- COUNTER --- */
+        .counter {
+            text-align: center; font-size: 11px; color: var(--muted);
+            padding: 8px; letter-spacing: 0.5px;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            text-align: center; padding: 12px 20px 20px;
+            background: var(--bg); z-index: 10;
+        }
+        .footer a {
+            font-size: 12px; color: var(--muted);
+            text-decoration: none; letter-spacing: 0.5px;
+            transition: color 0.2s;
+        }
+        .footer a:hover { color: var(--accent); }
+        .footer .made-by {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 13px; font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<!-- PRELOADER -->
+<div class="preloader" id="preloader">
+    <div class="preloader-text">Загружаем будущее...</div>
+    <div class="preloader-bar">
+        <div class="preloader-fill" id="preloader-fill"></div>
+    </div>
+</div>
+
+<div class="app">
+
+    <!-- SCREEN 1: Young -->
+    <div class="screen active" id="screen1">
+        <div class="screen-image">
+            <img src="images/25.jpg" alt="25 лет">
+        </div>
+        <div class="panel">
+            <div class="panel-text">
+                <em>Ей 25. Она не верит в SPF.</em><br>
+                Посмотри, что солнце сделает с её кожей за 20 лет.
+            </div>
+            <button class="btn" onclick="startErasing()">☀️ Показать</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: Erasing -->
+    <div class="screen" id="screen2">
+        <div class="screen-image" id="eraser-area">
+            <img src="images/45-no-spf.jpg" alt="45 лет без SPF">
+            <div class="blur-overlay" id="blur-overlay"></div>
+            <canvas id="eraser-canvas"></canvas>
+            <div class="eraser-hint" id="eraser-hint">☀️ Проведи солнышком по лицу</div>
+        </div>
+        <div class="panel">
+            <div class="panel-text" id="screen2-text">Стирай молодость...</div>
+            <button class="btn" id="btn-why" style="display:none;" onclick="showResearch()">Почему так?!</button>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: Research -->
+    <div class="screen" id="screen3">
+        <div class="research-scroll" id="research-scroll">
+            <h2>Что произошло?</h2>
+            <div class="stat-row">
+                <div class="stat-card">
+                    <div class="stat-num">90%</div>
+                    <div class="stat-label">старения кожи — от солнца</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">3x</div>
+                    <div class="stat-label">быстрее теряется коллаген</div>
+                </div>
+            </div>
+            <p>Исследование Университета Квинсленда, Австралия. 903 участника наблюдались 4.5 года.</p>
+            <div class="highlight">
+                <p><strong>Результат:</strong> группа с ежедневным SPF показала на 24% меньше признаков старения кожи.</p>
+            </div>
+            <p>Пигментные пятна появляются на 10 лет раньше. Сосудистые звёздочки, сухость, потеря упругости — всё это можно было предотвратить.</p>
+            <div class="finale">
+                Защищаться нужно уже сегодня.<br>
+                <strong>Даже если вы не видите разницы.</strong>
+            </div>
+        </div>
+        <div class="panel" id="panel-doshlo" style="display:none;">
+            <div class="panel-text" style="font-size:18px; font-weight:600;">Дошло?</div>
+            <div class="btn-row">
+                <button class="btn" onclick="handleYes()">Да</button>
+                <button class="btn btn-outline" onclick="handleNo()">Нет</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 3.5: Challenge -->
+    <div class="screen" id="screen-challenge">
+        <div class="challenge-screen">
+            <div class="challenge-emoji">🧴</div>
+            <div class="challenge-title">Стоп.</div>
+            <div class="challenge-sub">Раз уж дошло — проверим на практике.</div>
+            <div class="challenge-prompt">
+                За <span>15 секунд</span> напиши в комментарии:<br>
+                каким кремом с SPF ты пользуешься<br>и какая степень защиты?
+            </div>
+            <div class="timer-ring" id="timer-ring">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50"/>
+                    <circle cx="60" cy="60" r="50" class="progress" id="timer-circle"/>
+                </svg>
+                <div class="timer-num" id="timer-num">15</div>
+            </div>
+            <div class="challenge-result" id="challenge-result">
+                Не вспомнила за 15 секунд?<br>
+                <strong>Кто-то лукавит. 😏</strong><br><br>
+                Значит, пора разобраться с защитой.
+            </div>
+            <div class="btn-row" style="width:100%;">
+                <button class="btn" onclick="handleChallengeYes()">Написала ✓</button>
+                <button class="btn btn-outline" onclick="handleChallengeNo()">Не пользуюсь</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 4: Happy ending -->
+    <div class="screen" id="screen4">
+        <div class="screen-image">
+            <img src="images/25.jpg" alt="С SPF">
+        </div>
+        <div class="panel">
+            <div class="panel-text" style="font-size:17px;">
+                Теперь она пользуется SPF.<br>
+                Всегда. <strong>Даже зимой.</strong>
+            </div>
+            <button class="btn" onclick="shareResult()" style="margin-bottom:10px;">Поделиться</button>
+            <div class="counter" id="counter"></div>
+        </div>
+        <div class="footer">
+            <a href="https://t.me/buyan_online" class="made-by">Интерактивные лендинги — Ира Буян</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- SOUNDS ---
+const clickSound = new Audio('sounds/sfx-click.mp3');
+const horrorSound = new Audio('sounds/horror.mp3');
+const peaceSound = new Audio('sounds/peace.mp3');
+const whooshSound = new Audio('sounds/whoosh.mp3');
+clickSound.volume = 0.5;
+horrorSound.volume = 0.4;
+peaceSound.volume = 0.3;
+whooshSound.volume = 0.5;
+
+function playClick() { clickSound.currentTime = 0; clickSound.play().catch(()=>{}); }
+function playHorror() { horrorSound.currentTime = 0; horrorSound.play().catch(()=>{}); }
+function playPeace() { peaceSound.currentTime = 0; peaceSound.play().catch(()=>{}); }
+function playWhoosh() { whooshSound.currentTime = 0; whooshSound.play().catch(()=>{}); }
+
+// --- PRELOADER ---
+const fill = document.getElementById('preloader-fill');
+const preloader = document.getElementById('preloader');
+let progress = 0;
+const preloadInterval = setInterval(() => {
+    progress += Math.random() * 25 + 10;
+    if (progress >= 100) { progress = 100; clearInterval(preloadInterval); }
+    fill.style.width = progress + '%';
+    if (progress >= 100) {
+        setTimeout(() => preloader.classList.add('done'), 300);
+    }
+}, 200);
+
+// --- SCREENS ---
+function showScreen(id) {
+    playWhoosh();
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+// --- COUNTER ---
+let count = 1247 + Math.floor(Math.random() * 300);
+document.getElementById('counter').innerText = `Уже ${count.toLocaleString('ru')} человек узнали своё будущее`;
+
+// --- ERASING ---
+let erasedPercent = 0;
+let erasingDone = false;
+
+function startErasing() {
+    playClick();
+    showScreen('screen2');
+
+    const area = document.getElementById('eraser-area');
+    const canvas = document.getElementById('eraser-canvas');
+    const hint = document.getElementById('eraser-hint');
+    const blurOverlay = document.getElementById('blur-overlay');
+
+    // Reset blur overlay
+    blurOverlay.classList.remove('hidden');
+
+    canvas.width = area.offsetWidth;
+    canvas.height = area.offsetHeight;
+    canvas.style.display = 'block';
+    canvas.style.opacity = '1';
+    hint.style.display = 'block';
+
+    erasedPercent = 0;
+    erasingDone = false;
+    document.getElementById('btn-why').style.display = 'none';
+    document.getElementById('screen2-text').innerText = '☀️ Стирай молодость...';
+
+    // Draw young face on canvas (to erase revealing old face beneath)
+    const newCanvas = canvas.cloneNode(true);
+    canvas.parentNode.replaceChild(newCanvas, canvas);
+    const newCtx = newCanvas.getContext('2d');
+    const img2 = new Image();
+    img2.src = 'images/25.jpg';
+    img2.onload = () => { newCtx.drawImage(img2, 0, 0, newCanvas.width, newCanvas.height); };
+
+    function erase(x, y) {
+        if (erasingDone) return;
+        newCtx.globalCompositeOperation = 'destination-out';
+        newCtx.beginPath();
+        newCtx.arc(x, y, 40, 0, Math.PI * 2);
+        newCtx.fill();
+        hint.style.display = 'none';
+        erasedPercent += 0.3;
+
+        // Gradually reduce blur as user erases
+        const blurAmount = Math.max(0, 12 - erasedPercent * 0.3);
+        blurOverlay.style.backdropFilter = `blur(${blurAmount}px)`;
+        blurOverlay.style.webkitBackdropFilter = `blur(${blurAmount}px)`;
+
+        if (erasedPercent > 40 && !erasingDone) {
+            erasingDone = true;
+            blurOverlay.classList.add('hidden');
+            newCanvas.style.transition = 'opacity 0.8s';
+            newCanvas.style.opacity = '0';
+            playHorror();
+            setTimeout(() => {
+                newCanvas.style.display = 'none';
+                document.getElementById('screen2-text').innerText = '';
+                document.getElementById('btn-why').style.display = 'block';
+            }, 800);
+        }
+    }
+
+    newCanvas.addEventListener('mousemove', (e) => {
+        if (e.buttons !== 1) return;
+        const r = newCanvas.getBoundingClientRect();
+        erase(e.clientX - r.left, e.clientY - r.top);
+    });
+    newCanvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const r = newCanvas.getBoundingClientRect();
+        const t = e.touches[0];
+        erase(t.clientX - r.left, t.clientY - r.top);
+    }, { passive: false });
+}
+
+function showResearch() {
+    playClick();
+    showScreen('screen3');
+    const scroll = document.getElementById('research-scroll');
+    const panel = document.getElementById('panel-doshlo');
+    panel.style.display = 'none';
+    scroll.scrollTop = 0;
+
+    scroll.addEventListener('scroll', function check() {
+        if (scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 30) {
+            panel.style.display = 'block';
+            scroll.removeEventListener('scroll', check);
+        }
+    });
+    setTimeout(() => {
+        if (scroll.scrollHeight <= scroll.clientHeight + 30) {
+            panel.style.display = 'block';
+        }
+    }, 500);
+}
+
+function handleYes() {
+    playClick();
+    showScreen('screen-challenge');
+    startChallenge();
+}
+
+function handleNo() {
+    playClick();
+    erasedPercent = 0;
+    erasingDone = false;
+    document.getElementById('panel-doshlo').style.display = 'none';
+    showScreen('screen1');
+}
+
+// --- CHALLENGE TIMER ---
+let challengeTimer = null;
+
+function startChallenge() {
+    const circle = document.getElementById('timer-circle');
+    const numEl = document.getElementById('timer-num');
+    const result = document.getElementById('challenge-result');
+    result.classList.remove('show');
+    let timeLeft = 15;
+    const circumference = 314;
+    numEl.innerText = timeLeft;
+    circle.style.stroke = 'var(--accent)';
+    circle.style.strokeDashoffset = '0';
+
+    if (challengeTimer) clearInterval(challengeTimer);
+    challengeTimer = setInterval(() => {
+        timeLeft--;
+        numEl.innerText = timeLeft;
+        const offset = circumference * (1 - timeLeft / 15);
+        circle.style.strokeDashoffset = offset;
+        if (timeLeft <= 5) circle.style.stroke = '#FF3B30';
+        if (timeLeft <= 0) {
+            clearInterval(challengeTimer);
+            numEl.innerText = '😏';
+            result.classList.add('show');
+        }
+    }, 1000);
+}
+
+function handleChallengeYes() {
+    if (challengeTimer) clearInterval(challengeTimer);
+    playClick();
+    setTimeout(() => playPeace(), 300);
+    count++;
+    document.getElementById('counter').innerText = `Уже ${count.toLocaleString('ru')} человек узнали своё будущее`;
+    showScreen('screen4');
+}
+
+function handleChallengeNo() {
+    if (challengeTimer) clearInterval(challengeTimer);
+    playClick();
+    showScreen('screen4');
+}
+
+function shareResult() {
+    playClick();
+    if (navigator.share) {
+        navigator.share({
+            title: 'Ей 25. Она не верит в SPF.',
+            text: 'Я узнала, что будет с моей кожей без SPF через 20 лет. Попробуй сама:',
+            url: window.location.href
+        }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Ссылка скопирована! Отправь подруге.');
+        });
+    }
+}
+</script>
+</body>
+</html>

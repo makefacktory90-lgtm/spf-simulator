@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SPF Simulator | Узнай будущее своей кожи</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f8f8f8;
+            --text-main: #1a1a1a;
+            --text-muted: #888888;
+            --accent: #FF6B6B;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 500px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #ffffff;
+            box-shadow: 0 0 40px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            padding: 24px 20px 16px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .viewer-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: #e0e0e0;
+            min-height: 50vh;
+        }
+
+        .layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .layer-young { z-index: 4; }
+        .layer-aged { z-index: 3; }
+        .layer-research {
+            z-index: 2;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px 30px;
+        }
+
+        .research-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-main);
+        }
+
+        .research-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+        .layer-final { z-index: 1; }
+
+        .reveal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 8;
+            display: none;
+        }
+
+        .cta-button {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .cta-button:hover {
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        .cta-button:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        .eraser-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="18" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="2"/></svg>') 20 20, auto;
+        }
+
+        .eraser-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 6;
+            pointer-events: none;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .layer-no-spf {
+            width: 100%;
+        }
+
+        .layer-spf {
+            width: 50%;
+            overflow: hidden;
+            border-right: 2px solid #fff;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+        }
+
+        .layer-spf .img-wrapper {
+            width: 100vw;
+            max-width: 500px;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .label {
+            position: absolute;
+            top: 20px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 5;
+            transition: opacity 0.3s;
+        }
+        .label-spf { left: 20px; }
+        .label-nospf { right: 20px; }
+
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 40px;
+            transform: translateX(-50%);
+            cursor: ew-resize;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slider-button {
+            width: 36px;
+            height: 36px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 12px;
+            letter-spacing: -1px;
+            transition: transform 0.2s;
+        }
+
+        .slider-handle:active .slider-button {
+            transform: scale(0.9);
+        }
+
+        .bottom-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 30px 20px 40px;
+            background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0));
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .fact-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            text-align: center;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fact-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-main);
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+        .fact-text.fade {
+            opacity: 0;
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            padding: 0 10px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #eee;
+            z-index: 0;
+            transform: translateY(-50%);
+        }
+
+        .age-point {
+            position: relative;
+            z-index: 1;
+            background: #fff;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--text-muted);
+            border: 2px solid #eee;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .age-point.active {
+            color: #fff;
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: scale(1.15);
+            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+        }
+
+        .share-btn {
+            background: none;
+            border: 1px solid var(--text-main);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 30px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .share-btn:hover {
+            background: var(--text-main);
+            color: #fff;
+        }
+
+        .share-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <h1>SPF Simulator</h1>
+            <p>Что солнце делает с кожей</p>
+        </div>
+
+        <div class="viewer-container" id="viewer">
+            <img src="images/25.jpg" class="layer layer-young" id="layer-young">
+            <img src="images/45-no-spf.jpg" class="layer layer-aged" id="layer-aged" style="display:none;">
+            <div class="layer layer-research" id="layer-research" style="display:none;">
+                <div class="research-title">Исследование Queensland, Австралия</div>
+                <div class="research-text">
+                    903 участника, 4.5 года наблюдений. Группа с ежедневным SPF показала на 24% меньше признаков старения по сравнению с контрольной группой.
+                    <br><br>
+                    90% видимого старения кожи — результат воздействия солнца, а не возраста.
+                </div>
+            </div>
+            <img src="images/25.jpg" class="layer layer-final" id="layer-final" style="display:none;">
+
+            <canvas class="eraser-canvas" id="eraser-canvas" style="display:none;"></canvas>
+        </div>
+
+        <div class="bottom-panel">
+            <div class="fact-card">
+                <div class="fact-text" id="fact-text">Она не пользуется SPF. Смотри, что солнце сделает с её кожей за 20 лет.</div>
+            </div>
+
+            <button class="cta-button" id="cta-button" onclick="handleAction()">Смотреть</button>
+
+            <div id="choice-buttons" style="display:none; display:flex; gap:15px; position:absolute; bottom:40px; left:50%; transform:translateX(-50%); z-index:20;">
+                <button class="cta-button" onclick="handleChoice('yes')" style="position:static; transform:none;">Да</button>
+                <button class="cta-button" onclick="handleChoice('no')" style="position:static; transform:none; background:#888;">Нет</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const viewer = document.getElementById('viewer');
+        const eraserCanvas = document.getElementById('eraser-canvas');
+        const factText = document.getElementById('fact-text');
+        const ctaButton = document.getElementById('cta-button');
+        const choiceButtons = document.getElementById('choice-buttons');
+        const ctx = eraserCanvas.getContext('2d');
+
+        let stage = 1;
+        let erasedPercent = 0;
+
+        function handleAction() {
+            if (stage === 1) {
+                ctaButton.style.display = 'none';
+                startErasing();
+            } else if (stage === 2) {
+                document.getElementById('layer-aged').style.display = 'none';
+                document.getElementById('layer-research').style.display = 'flex';
+                ctaButton.innerText = 'Дошло?';
+                ctaButton.style.display = 'block';
+                stage = 3;
+            } else if (stage === 3) {
+                ctaButton.style.display = 'none';
+                choiceButtons.style.display = 'flex';
+            }
+        }
+
+        function handleChoice(choice) {
+            choiceButtons.style.display = 'none';
+            document.getElementById('layer-research').style.display = 'none';
+
+            if (choice === 'yes') {
+                document.getElementById('layer-final').style.display = 'block';
+                factText.innerText = 'Теперь она пользуется SPF. Всегда. Даже зимой.';
+                stage = 5;
+            } else {
+                document.getElementById('layer-young').style.display = 'block';
+                factText.innerText = 'Она не пользуется SPF. Смотри, что солнце сделает с её кожей за 20 лет.';
+                ctaButton.innerText = 'Смотреть';
+                ctaButton.style.display = 'block';
+                stage = 1;
+            }
+        }
+
+        function startErasing() {
+            eraserCanvas.style.display = 'block';
+            eraserCanvas.width = viewer.offsetWidth;
+            eraserCanvas.height = viewer.offsetHeight;
+            ctx.fillStyle = 'rgba(0,0,0,0.9)';
+            ctx.fillRect(0, 0, eraserCanvas.width, eraserCanvas.height);
+            erasedPercent = 0;
+        }
+
+        function erase(x, y) {
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(x, y, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            erasedPercent += 0.3;
+            if (erasedPercent > 50 && stage === 1) {
+                eraserCanvas.style.display = 'none';
+                document.getElementById('layer-young').style.display = 'none';
+                document.getElementById('layer-aged').style.display = 'block';
+                ctaButton.innerText = 'Почему так?!';
+                ctaButton.style.display = 'block';
+                stage = 2;
+            }
+        }
+
+        eraserCanvas.addEventListener('mousemove', (e) => {
+            if (e.buttons === 1) {
+                const rect = eraserCanvas.getBoundingClientRect();
+                erase(e.clientX - rect.left, e.clientY - rect.top);
+            }
+        });
+
+        eraserCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = eraserCanvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            erase(touch.clientX - rect.left, touch.clientY - rect.top);
+        });
+    </script>
+</body>
+</html>
