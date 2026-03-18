@@ -351,9 +351,28 @@
         </div>
         <div class="panel">
             <div class="panel-text" style="font-size:16px;">
-                Ну и ладно. Зато теперь ты — <strong>SPF крем.</strong> 🧴
+                Ещё не поздно.<br><strong>Выбери свой SPF.</strong>
             </div>
-            <button class="btn" onclick="handleNo()">Начать заново</button>
+            <button class="btn" onclick="showBuyScreen()" style="margin-bottom:10px;">Купить 🧴</button>
+            <button class="btn btn-outline" onclick="handleNo()">Начать заново</button>
+        </div>
+    </div>
+
+    <!-- SCREEN BUY: pitch -->
+    <div class="screen" id="screen-buy">
+        <div class="challenge-screen" style="justify-content:center;">
+            <div style="font-size:72px; margin-bottom:24px;">🧴</div>
+            <div class="challenge-title" style="font-size:22px; margin-bottom:16px;">
+                Здесь мог быть<br>ваш крем.
+            </div>
+            <div class="challenge-sub" style="font-size:15px; margin-bottom:32px; color:#555;">
+                Хотите такую игрушку для вашего бренда?<br>
+                Напишите Ире — сделаем за неделю.
+            </div>
+            <a href="https://t.me/ira_and_ai" class="btn" style="text-decoration:none; text-align:center; margin-bottom:12px;">
+                Написать Ире ✍️
+            </a>
+            <button class="btn btn-outline" onclick="handleNo()">Начать заново</button>
         </div>
     </div>
 
@@ -513,12 +532,15 @@ function handleYes() {
     startChallenge();
 }
 
+function showBuyScreen() {
+    playClick();
+    showScreen('screen-buy');
+}
+
 function handleNo() {
     playClick();
-    showScreen('screen-no');
-    const video2 = document.getElementById('video2');
-    video2.currentTime = 0;
-    video2.play().catch(()=>{});
+    document.getElementById('panel-doshlo').style.display = 'none';
+    showScreen('screen1');
 }
 
 // --- CHALLENGE TIMER ---
