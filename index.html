@@ -349,12 +349,11 @@
         <div class="screen-image">
             <video id="video2" src="videos/2_.mp4" playsinline webkit-playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;"></video>
         </div>
-        <div class="panel">
+        <div class="panel" style="display:none;">
             <div class="panel-text" style="font-size:16px;">
                 Ещё не поздно.<br><strong>Выбери свой SPF.</strong>
             </div>
-            <button class="btn" onclick="showBuyScreen()" style="margin-bottom:10px;">Купить 🧴</button>
-            <button class="btn btn-outline" onclick="handleNo()">Начать заново</button>
+            <button class="btn" onclick="showBuyScreen()">Купить 🧴</button>
         </div>
     </div>
 
@@ -375,9 +374,10 @@
                 Хотите такую игрушку для вашего бренда?<br>
                 Напишите — сделаем за неделю.
             </div>
-            <a href="https://t.me/ira_and_ai" class="btn" style="text-decoration:none; text-align:center; margin-bottom:12px;">
+            <a href="https://t.me/ira_alfred_bot" class="btn" style="text-decoration:none; text-align:center; margin-bottom:12px;">
                 Написать Ире ✍️
             </a>
+            <button class="btn btn-outline" style="color:#fff; border-color:#444;" onclick="restartGame()">Начать заново</button>
             <button class="btn btn-outline" style="color:#fff; border-color:#444;" onclick="restartGame()">Начать заново</button>
         </div>
     </div>
@@ -419,14 +419,14 @@
         </div>
         <div class="panel">
             <div class="panel-text" style="font-size:17px;">
-                Теперь она пользуется SPF.<br>
+                Надеюсь, ты пользуешься SPF.<br>
                 Всегда. <strong>Даже зимой.</strong>
             </div>
             <button class="btn" onclick="shareResult()" style="margin-bottom:10px;">Поделиться</button>
             <div class="counter" id="counter"></div>
         </div>
         <div class="footer">
-            <a href="https://t.me/buyan_online" class="made-by">Интерактивные лендинги — Ира Буян</a>
+            <a href="https://t.me/ira_alfred_bot" class="made-by">Ира и AI — напиши Альфреду</a>
         </div>
     </div>
 </div>
@@ -610,15 +610,18 @@ function handleChallengeNo() {
 
 function shareResult() {
     playClick();
+    const shareData = {
+        title: 'Тебе 25. Ты не веришь в SPF.',
+        text: 'Посмотри что солнце делает с кожей за 20 лет 😱',
+        url: window.location.href
+    };
     if (navigator.share) {
-        navigator.share({
-            title: 'Ей 25. Она не верит в SPF.',
-            text: 'Я узнала, что будет с моей кожей без SPF через 20 лет. Попробуй сама:',
-            url: window.location.href
-        }).catch(() => {});
+        navigator.share(shareData).catch(()=>{});
     } else {
         navigator.clipboard.writeText(window.location.href).then(() => {
-            alert('Ссылка скопирована! Отправь подруге.');
+            alert('Ссылка скопирована! Отправь подруге 🧴');
+        }).catch(() => {
+            prompt('Скопируй ссылку:', window.location.href);
         });
     }
 }
