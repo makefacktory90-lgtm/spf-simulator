@@ -300,16 +300,13 @@
         </div>
     </div>
 
-    <!-- SCREEN 2: Erasing -->
+    <!-- SCREEN 2: Video aging -->
     <div class="screen" id="screen2">
         <div class="screen-image" id="eraser-area">
-            <img src="images/45-no-spf.jpg" alt="45 лет без SPF">
-            <div class="blur-overlay" id="blur-overlay"></div>
-            <canvas id="eraser-canvas"></canvas>
-            <div class="eraser-hint" id="eraser-hint">☀️ Проведи солнышком по лицу</div>
+            <video id="video1" src="videos/1_.mp4" playsinline webkit-playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;"></video>
         </div>
         <div class="panel">
-            <div class="panel-text" id="screen2-text">Стирай молодость...</div>
+            <div class="panel-text" id="screen2-text">Смотри что происходит...</div>
             <button class="btn" id="btn-why" style="display:none;" onclick="showResearch()">Почему так?!</button>
         </div>
     </div>
@@ -344,6 +341,19 @@
                 <button class="btn" onclick="handleYes()">Да</button>
                 <button class="btn btn-outline" onclick="handleNo()">Нет</button>
             </div>
+        </div>
+    </div>
+
+    <!-- SCREEN NO: Grandma → Cream -->
+    <div class="screen" id="screen-no">
+        <div class="screen-image">
+            <video id="video2" src="videos/2_.mp4" playsinline webkit-playsinline style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;"></video>
+        </div>
+        <div class="panel">
+            <div class="panel-text" style="font-size:16px;">
+                Ну и ладно. Зато теперь ты — <strong>SPF крем.</strong> 🧴
+            </div>
+            <button class="btn" onclick="handleNo()">Начать заново</button>
         </div>
     </div>
 
@@ -464,67 +474,16 @@ let erasingDone = false;
 function startErasing() {
     playClick();
     showScreen('screen2');
-
-    const area = document.getElementById('eraser-area');
-    const canvas = document.getElementById('eraser-canvas');
-    const hint = document.getElementById('eraser-hint');
-    const blurOverlay = document.getElementById('blur-overlay');
-
-    // Reset state
-    blurOverlay.style.backdropFilter = 'blur(18px)';
-    blurOverlay.style.webkitBackdropFilter = 'blur(18px)';
-    blurOverlay.style.opacity = '1';
-    blurOverlay.classList.remove('hidden');
-
-    erasedPercent = 0;
-    erasingDone = false;
-    hint.style.display = 'block';
+    const video1 = document.getElementById('video1');
+    document.getElementById('screen2-text').innerText = '☀️ Смотри что происходит...';
     document.getElementById('btn-why').style.display = 'none';
-    document.getElementById('screen2-text').innerText = '☀️ Стирай дымку...';
-
-    // Canvas is just for tracking touch/mouse — transparent, no image drawn
-    canvas.width = area.offsetWidth;
-    canvas.height = area.offsetHeight;
-    canvas.style.display = 'block';
-
-    // Clone to remove old listeners
-    const newCanvas = canvas.cloneNode(true);
-    canvas.parentNode.replaceChild(newCanvas, canvas);
-
-    function erase(x, y) {
-        if (erasingDone) return;
-        hint.style.display = 'none';
-        erasedPercent += 0.5;
-
-        // Reduce blur as user erases
-        const blurAmount = Math.max(0, 18 - erasedPercent * 0.45);
-        blurOverlay.style.backdropFilter = `blur(${blurAmount}px)`;
-        blurOverlay.style.webkitBackdropFilter = `blur(${blurAmount}px)`;
-        blurOverlay.style.opacity = String(Math.max(0, 1 - erasedPercent * 0.025));
-
-        if (erasedPercent > 40 && !erasingDone) {
-            erasingDone = true;
-            blurOverlay.style.transition = 'opacity 0.8s, backdrop-filter 0.8s';
-            blurOverlay.classList.add('hidden');
-            playHorror();
-            setTimeout(() => {
-                document.getElementById('screen2-text').innerText = '';
-                document.getElementById('btn-why').style.display = 'block';
-            }, 800);
-        }
-    }
-
-    newCanvas.addEventListener('mousemove', (e) => {
-        if (e.buttons !== 1) return;
-        const r = newCanvas.getBoundingClientRect();
-        erase(e.clientX - r.left, e.clientY - r.top);
-    });
-    newCanvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        const r = newCanvas.getBoundingClientRect();
-        const t = e.touches[0];
-        erase(t.clientX - r.left, t.clientY - r.top);
-    }, { passive: false });
+    video1.currentTime = 0;
+    video1.play().catch(()=>{});
+    playHorror();
+    video1.onended = () => {
+        document.getElementById('screen2-text').innerText = '';
+        document.getElementById('btn-why').style.display = 'block';
+    };
 }
 
 function showResearch() {
@@ -556,10 +515,10 @@ function handleYes() {
 
 function handleNo() {
     playClick();
-    erasedPercent = 0;
-    erasingDone = false;
-    document.getElementById('panel-doshlo').style.display = 'none';
-    showScreen('screen1');
+    showScreen('screen-no');
+    const video2 = document.getElementById('video2');
+    video2.currentTime = 0;
+    video2.play().catch(()=>{});
 }
 
 // --- CHALLENGE TIMER ---
