@@ -540,11 +540,17 @@ function showBuyScreen() {
 function handleNo() {
     playClick();
     document.getElementById('panel-doshlo').style.display = 'none';
+    // First show screen-no with video playing, panel hidden
+    const panel = document.querySelector('#screen-no .panel');
+    panel.style.display = 'none';
     showScreen('screen-no');
     const video2 = document.getElementById('video2');
     video2.currentTime = 0;
     video2.play().catch(()=>{});
-    video2.onended = () => { showScreen('screen1'); };
+    video2.onended = () => {
+        // After video ends — show the buy panel
+        panel.style.display = 'block';
+    };
 }
 
 // --- CHALLENGE TIMER ---
