@@ -504,36 +504,26 @@ let introWatched = false;
 
 function handleStartBtn() {
     playClick();
-    const btn = document.getElementById('btn-start');
     const introVideo = document.getElementById('video-intro');
-    if (!introWatched) {
-        // Первое нажатие — играем интро
-        introVideo.currentTime = 0;
-        introVideo.play().catch(()=>{});
-        introVideo.onended = () => {
-            introWatched = true;
-            btn.innerText = 'Посмотри, что солнце сделает с кожей за 20 лет →';
-            btn.style.fontSize = '13px';
-        };
-    } else {
-        // Второе нажатие — переходим на видео старения
-        startErasing();
-    }
+    introVideo.currentTime = 0;
+    introVideo.play().catch(()=>{});
+    introVideo.onended = () => {
+        fadeToBlack(() => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen2').classList.add('active');
+            const video1 = document.getElementById('video1');
+            document.getElementById('btn-why').style.display = 'none';
+            video1.currentTime = 0;
+            video1.play().catch(()=>{});
+            video1.onended = () => {
+                document.getElementById('btn-why').style.display = 'block';
+            };
+        });
+    };
 }
 
 function startErasing() {
-    introWatched = false;
-    document.getElementById('btn-start').innerText = '☀️ Показать';
-    document.getElementById('btn-start').style.fontSize = '';
-    showScreen('screen2');
-    const video1 = document.getElementById('video1');
-    document.getElementById('screen2-text').innerText = '';
-    document.getElementById('btn-why').style.display = 'none';
-    video1.currentTime = 0;
-    video1.play().catch(()=>{});
-    video1.onended = () => {
-        document.getElementById('btn-why').style.display = 'block';
-    };
+    handleStartBtn();
 }
 
 function showResearch() {
