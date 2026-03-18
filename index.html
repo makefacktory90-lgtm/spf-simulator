@@ -289,7 +289,7 @@
     <!-- SCREEN 1: Young -->
     <div class="screen active" id="screen1">
         <div class="screen-image">
-            <video id="video-intro" src="videos/intro.mp4" playsinline webkit-playsinline autoplay muted loop preload="auto" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;"></video>
+            <video id="video-intro" src="videos/intro.mp4" playsinline webkit-playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;"></video>
         </div>
         <div class="panel">
             <div class="panel-text">
@@ -523,16 +523,20 @@ let erasingDone = false;
 
 function startErasing() {
     playClick();
-    showScreen('screen2');
-    const video1 = document.getElementById('video1');
-    document.getElementById('screen2-text').innerText = '☀️ Смотри что происходит...';
-    document.getElementById('btn-why').style.display = 'none';
-    video1.currentTime = 0;
-    video1.play().catch(()=>{});
-    playHorror();
-    video1.onended = () => {
-        document.getElementById('screen2-text').innerText = '';
-        document.getElementById('btn-why').style.display = 'block';
+    // Play intro with sound first, then go to aging video
+    const introVideo = document.getElementById('video-intro');
+    introVideo.play().catch(()=>{});
+    introVideo.onended = () => {
+        showScreen('screen2');
+        const video1 = document.getElementById('video1');
+        document.getElementById('screen2-text').innerText = '☀️ Смотри что происходит...';
+        document.getElementById('btn-why').style.display = 'none';
+        video1.currentTime = 0;
+        video1.play().catch(()=>{});
+        video1.onended = () => {
+            document.getElementById('screen2-text').innerText = '';
+            document.getElementById('btn-why').style.display = 'block';
+        };
     };
 }
 
