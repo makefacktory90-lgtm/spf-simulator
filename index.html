@@ -434,7 +434,17 @@
 // --- SOUNDS ---
 const clickSound = new Audio('sounds/sfx-click.mp3');
 const whooshSound = new Audio('sounds/whoosh.mp3');
+clickSound.volume = 0.5;
+whooshSound.volume = 0.5;
+
+function playClick() { clickSound.currentTime = 0; clickSound.play().catch(()=>{}); }
+function playHorror() {}
+function playPeace() {}
+function playWhoosh() { whooshSound.currentTime = 0; whooshSound.play().catch(()=>{}); }
+
+// Typewriter sound
 let audioCtx = null;
+let lastTypeTime = 0;
 function playTypeKey() {
     try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -449,46 +459,10 @@ function playTypeKey() {
         src.start();
     } catch(e) {}
 }
-let lastTypeTime = 0;
 function onTypeInput() {
     const now = Date.now();
     if (now - lastTypeTime > 40) { playTypeKey(); lastTypeTime = now; }
 }
-clickSound.volume = 0.5;
-whooshSound.volume = 0.5;
-
-function playClick() { clickSound.currentTime = 0; clickSound.play().catch(()=>{}); }
-function playHorror() {}
-function playPeace() {}
-function playWhoosh() { whooshSound.currentTime = 0; whooshSound.play().catch(()=>{}); }
-// Typewriter: reuse click sound at higher pitch via AudioContext
-let audioCtx = null;
-function playTypeKey() {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.04, audioCtx.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
-        const src = audioCtx.createBufferSource();
-        src.buffer = buf;
-        const gain = audioCtx.createGain();
-        gain.gain.value = 0.18;
-        src.connect(gain); gain.connect(audioCtx.destination);
-        src.start();
-    } catch(e) {}
-}
-let lastTypeTime = 0;
-function onTypeInput() {
-    const now = Date.now();
-    if (now - lastTypeTime > 40) { playTypeKey(); lastTypeTime = now; }
-}
-clickSound.volume = 0.5;
-whooshSound.volume = 0.5;
-
-function playClick() { clickSound.currentTime = 0; clickSound.play().catch(()=>{}); }
-function playHorror() {}
-function playPeace() {}
-function playWhoosh() { whooshSound.currentTime = 0; whooshSound.play().catch(()=>{}); }
 
 // --- PRELOADER ---
 const fill = document.getElementById('preloader-fill');
