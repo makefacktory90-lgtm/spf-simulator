@@ -580,10 +580,15 @@ function handleChallengeYes() {
     playClick();
     count++;
     updateCounter();
-    showScreen('screen4');
     const outro = document.getElementById('video-outro');
+    outro.style.opacity = '0';
     outro.currentTime = 1.5;
-    outro.play().catch(()=>{});
+    outro.onseeked = () => {
+        showScreen('screen4');
+        outro.style.opacity = '1';
+        outro.play().catch(()=>{});
+        outro.onseeked = null;
+    };
     // Обрезаем конец на 0.5 сек раньше
     outro.ontimeupdate = () => {
         if (outro.duration && outro.currentTime >= outro.duration - 0.5) {
