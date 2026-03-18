@@ -378,7 +378,6 @@
                 Написать Ире ✍️
             </a>
             <button class="btn btn-outline" style="color:#fff; border-color:#444;" onclick="restartGame()">Начать заново</button>
-            <button class="btn btn-outline" style="color:#fff; border-color:#444;" onclick="restartGame()">Начать заново</button>
         </div>
     </div>
 
@@ -436,7 +435,6 @@ const clickSound = new Audio('sounds/sfx-click.mp3');
 clickSound.volume = 0.5;
 function playClick() { clickSound.currentTime = 0; clickSound.play().catch(()=>{}); }
 
-// Wrong sound via AudioContext (тихий низкий тон)
 let audioCtx = null;
 function playWrong() {
     try {
@@ -444,29 +442,17 @@ function playWrong() {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.frequency.value = 180;
-        osc.type = 'sine';
+        osc.frequency.value = 180; osc.type = 'sine';
         gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
         osc.start(); osc.stop(audioCtx.currentTime + 0.4);
     } catch(e) {}
 }
 
-// --- FADE OVERLAY ---
-const fadeEl = document.createElement('div');
-fadeEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999;pointer-events:none;opacity:0;transition:opacity 0.4s ease;';
-document.body.appendChild(fadeEl);
-
-function fadeToBlack(cb) {
-    fadeEl.style.opacity = '1';
-    setTimeout(() => { cb(); fadeEl.style.opacity = '0'; }, 400);
-}
-
+// --- SCREENS ---
 function showScreen(id) {
-    fadeToBlack(() => {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-    });
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
 }
 
 // --- PRELOADER ---
@@ -482,13 +468,6 @@ const preloadInterval = setInterval(() => {
     }
 }, 200);
 
-// --- SCREENS ---
-function showScreen(id) {
-    playWhoosh();
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-
 // --- COUNTER ---
 let count = 1247 + Math.floor(Math.random() * 300);
 function updateCounter() {
@@ -496,20 +475,14 @@ function updateCounter() {
     if (el) el.innerText = `Уже ${count.toLocaleString('ru')} человек узнали своё будущее`;
 }
 
-// --- ERASING ---
-let erasedPercent = 0;
-let erasingDone = false;
-
-let introWatched = false;
-
+// --- MAIN FLOW ---
 function handleStartBtn() {
     playClick();
     const introVideo = document.getElementById('video-intro');
     introVideo.currentTime = 0;
     introVideo.play().catch(()=>{});
     introVideo.onended = () => {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('screen2').classList.add('active');
+        showScreen('screen2');
         const video1 = document.getElementById('video1');
         document.getElementById('btn-why').style.display = 'none';
         video1.currentTime = 0;
@@ -520,10 +493,6 @@ function handleStartBtn() {
     };
 }
 
-function startErasing() {
-    handleStartBtn();
-}
-
 function showResearch() {
     playClick();
     showScreen('screen3');
@@ -531,7 +500,6 @@ function showResearch() {
     const panel = document.getElementById('panel-doshlo');
     panel.style.display = 'none';
     scroll.scrollTop = 0;
-
     scroll.addEventListener('scroll', function check() {
         if (scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 30) {
             panel.style.display = 'block';
@@ -549,12 +517,6 @@ function handleYes() {
     playClick();
     showScreen('screen-challenge');
     startChallenge();
-}
-
-function restartGame() {
-    playClick();
-    document.getElementById('panel-doshlo').style.display = 'none';
-    showScreen('screen1');
 }
 
 function handleNo() {
@@ -576,29 +538,30 @@ function showBuyScreen() {
     showScreen('screen-buy');
 }
 
-// --- CHALLENGE TIMER ---
-let challengeTimer = null;
+function restartGame() {
+    playClick();
+    document.getElementById('panel-doshlo').style.display = 'none';
+    showScreen('screen1');
+}
 
+// --- CHALLENGE ---
+let challengeTimer = null;
 function startChallenge() {
     const circle = document.getElementById('timer-circle');
     const numEl = document.getElementById('timer-num');
     const result = document.getElementById('challenge-result');
     const input = document.getElementById('spf-input');
     result.classList.remove('show');
-    input.value = '';
-    input.disabled = false;
+    input.value = ''; input.disabled = false;
     let timeLeft = 15;
-    const circumference = 314;
     numEl.innerText = timeLeft;
     circle.style.stroke = 'var(--accent)';
     circle.style.strokeDashoffset = '0';
-
     if (challengeTimer) clearInterval(challengeTimer);
     challengeTimer = setInterval(() => {
         timeLeft--;
         numEl.innerText = timeLeft;
-        const offset = circumference * (1 - timeLeft / 15);
-        circle.style.strokeDashoffset = offset;
+        circle.style.strokeDashoffset = 314 * (1 - timeLeft / 15);
         if (timeLeft <= 5) circle.style.stroke = '#FF3B30';
         if (timeLeft <= 0) {
             clearInterval(challengeTimer);
@@ -620,27 +583,14 @@ function handleChallengeYes() {
     outro.play().catch(()=>{});
 }
 
-function handleChallengeNo() {
-    if (challengeTimer) clearInterval(challengeTimer);
-    playClick();
-    showScreen('screen4');
-}
-
 function shareResult() {
     playClick();
     const url = window.location.href;
     if (navigator.share) {
-        navigator.share({
-            title: 'Тебе 25. Ты не веришь в SPF.',
-            text: 'Посмотри что солнце делает с кожей за 20 лет 😱',
-            url: url
-        }).catch(()=>{});
+        navigator.share({ title: 'Тебе 25. Ты не веришь в SPF.', text: 'Посмотри что солнце делает с кожей за 20 лет 😱', url: url }).catch(()=>{});
     } else {
-        try {
-            navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована! Отправь подруге 🧴'));
-        } catch(e) {
-            prompt('Скопируй ссылку:', url);
-        }
+        try { navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована! Отправь подруге 🧴')); }
+        catch(e) { prompt('Скопируй ссылку:', url); }
     }
 }
 </script>
