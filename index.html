@@ -71,7 +71,17 @@
             line-height: 1.6; color: #444;
             margin-bottom: 20px;
         }
-        .challenge-result.show { display: block; }
+        .spf-input {
+            width: 100%; padding: 14px 18px;
+            border: 2px solid #eee; border-radius: 16px;
+            font-family: 'Inter', sans-serif; font-size: 15px;
+            color: var(--text); background: #fafafa;
+            resize: none; outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 16px;
+        }
+        .spf-input:focus { border-color: var(--accent); background: #fff; }
+        .spf-input::placeholder { color: #bbb; }
 
         /* --- PRELOADER --- */
         .preloader {
@@ -344,9 +354,10 @@
             <div class="challenge-title">Стоп.</div>
             <div class="challenge-sub">Раз уж дошло — проверим на практике.</div>
             <div class="challenge-prompt">
-                За <span>15 секунд</span> напиши в комментарии:<br>
+                За <span>15 секунд</span> напиши:<br>
                 каким кремом с SPF ты пользуешься<br>и какая степень защиты?
             </div>
+            <textarea class="spf-input" id="spf-input" rows="3" placeholder="Например: Bioderma SPF 50+..." oninput="onTypeInput()"></textarea>
             <div class="timer-ring" id="timer-ring">
                 <svg width="120" height="120" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="50"/>
@@ -391,6 +402,27 @@ const clickSound = new Audio('sounds/sfx-click.mp3');
 const horrorSound = new Audio('sounds/horror.mp3');
 const peaceSound = new Audio('sounds/peace.mp3');
 const whooshSound = new Audio('sounds/whoosh.mp3');
+// Typewriter: reuse click sound at higher pitch via AudioContext
+let audioCtx = null;
+function playTypeKey() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.04, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.18;
+        src.connect(gain); gain.connect(audioCtx.destination);
+        src.start();
+    } catch(e) {}
+}
+let lastTypeTime = 0;
+function onTypeInput() {
+    const now = Date.now();
+    if (now - lastTypeTime > 40) { playTypeKey(); lastTypeTime = now; }
+}
 clickSound.volume = 0.5;
 horrorSound.volume = 0.4;
 peaceSound.volume = 0.3;
@@ -537,7 +569,10 @@ function startChallenge() {
     const circle = document.getElementById('timer-circle');
     const numEl = document.getElementById('timer-num');
     const result = document.getElementById('challenge-result');
+    const input = document.getElementById('spf-input');
     result.classList.remove('show');
+    input.value = '';
+    input.disabled = false;
     let timeLeft = 15;
     const circumference = 314;
     numEl.innerText = timeLeft;
@@ -554,7 +589,8 @@ function startChallenge() {
         if (timeLeft <= 0) {
             clearInterval(challengeTimer);
             numEl.innerText = '😏';
-            result.classList.add('show');
+            input.disabled = true;
+            if (!input.value.trim()) result.classList.add('show');
         }
     }, 1000);
 }
